@@ -1,8 +1,91 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
+
+    var userId = Context.User.Identity.Name;
 }
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 </div>
+
+<!-- ユーザを識別するID -->
+<input type="hidden" id="userGroup" value="@(userId)" />
+
+<div class="container">
+    <div class="row">&nbsp;</div>
+    <div class="row">
+        <div class="col-2">Message</div>
+        <div class="col-4"><input type="text" id="messageInput" /></div>
+    </div>
+    <div class="row">&nbsp;</div>
+    <div class="row">
+        <div class="col-6">
+            <input type="button" id="sendButton" value="Send Message" />
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <hr />
+    </div>
+</div>
+<div class="row">
+    <div class="col-6">
+        <ul id="messagesList"></ul>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script src="~/lib/microsoft-signalr/signalr.min.js"></script>
+    <script type="text/javascript">
+
+        // SignalR 接続先
+        var connection = new signalR.HubConnectionBuilder().withUrl("/UserHub").build();
+
+        // メッセージ受信時の処理
+        connection.on("ReceiveMessage", function (message) {
+            // 受信したメッセージの表示
+            console.log("ReceiveMessage:" + message);
+
+            $("<li />").appendTo("#messagesList").text(message);
+        });
+        // 終了メッセージ受信時の処理
+        connection.on("ReceiveFinishMessage", function () {
+            console.log("ReceiveFinishMessage");
+        });
+
+        var userGroup = $("#userGroup").val();
+
+        // SignalR 受信処理を開始
+        connection.start().then(function () {
+            if (userGroup) {
+                // グループに参加
+                connection.invoke("AddToGroup", userGroup).catch(function (err) {
+                    return console.error(err.toString());
+                });
+            }
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
+
+        // クライアントによる 情報の通知
+        if (userGroup) {
+            $("#sendButton").click(function () {
+                var message = $("#messageInput").val();
+                connection.invoke("SendClientMessage", userGroup, message).catch(function (err) {
+                    return console.error(err.toString());
+                });
+            });
+        } else {
+            $("#sendButton").prop("disabled", true);
+        }
+    </script>
+
+    <script type="text/javascript">
+        $(function () {
+
+        });
+    </script>
+}
