@@ -139,3 +139,16 @@ public IBackgroundTaskQueue Queue { get; }
 クライアント側のライブラリとして toast.js を使って ユーザに通知するメッセージを トースト形式とする。
 
 
+### コードの実行例
+
+git clone https://github.com/kkato233/sample-singalR-UserHub.git
+cd sample-singalR-UserHub\WebApplication1
+dotnet run
+
+https://localhost:5001 を開く
+
+ユーザ新規登録して 動作確認する。
+
+
+
+
