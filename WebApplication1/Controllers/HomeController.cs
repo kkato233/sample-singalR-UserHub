@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApplication1.Models;
 using WebApplication1.Services;
+using WebApplication1.Utility;
 
 namespace WebApplication1.Controllers
 {
@@ -31,14 +32,34 @@ namespace WebApplication1.Controllers
         [HttpPost,ActionName("Index")]
         public IActionResult IndexPost()
         {
-            // 遅い処理をバックグラウンドで実行させる
-            Queue.QueueBackgroundWorkItem(async token =>
+            string userGroup = this.HttpContext.User.Identity.Name;
+
+            if (userGroup != null)
             {
-                await Task.Delay(1000);
-                Debug.WriteLine("A");
-                await Task.Delay(1000);
-                Debug.WriteLine("B");
-            });
+                UserHubSignalR personSignal = new UserHubSignalR(Request, userGroup);
+
+                // 遅い処理をバックグラウンドで実行させる
+                Queue.QueueBackgroundWorkItem(async token =>
+                {
+                    await personSignal.SendMessageAsync("開始しました");
+
+                    await Task.Delay(1000);
+                    // ユーザに非同期で通知
+                    await personSignal.SendMessageAsync(".. A ..");
+
+                    await Task.Delay(1000);
+                    await personSignal.SendMessageAsync(".. B ..");
+
+                    await Task.Delay(1500);
+
+                    // ユーザに非同期で通知
+                    await personSignal.SendMessageAsync("完了しました");
+
+                    // 完了通知
+                    await personSignal.SendClientFinishMessageAsync();
+                });
+            }
+            
 
             return View();
         }
