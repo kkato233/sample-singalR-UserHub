@@ -13,6 +13,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebApplication1.Data;
 using WebApplication1.Hubs;
+using WebApplication1.Services;
 
 namespace WebApplication1
 {
@@ -38,6 +39,10 @@ namespace WebApplication1
 
             // SignalR 定義追加
             services.AddSignalR();
+
+            // バックグランドタスク用
+            services.AddHostedService<QueuedHostedService>();
+            services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
