@@ -4,6 +4,10 @@
     var userId = Context.User.Identity.Name;
 }
 
+@section Styles {
+    <link href="~/lib/toastr.js/toastr.min.css" rel="stylesheet" />
+}
+
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
@@ -42,6 +46,7 @@
 
 @section Scripts {
     <script src="~/lib/microsoft-signalr/signalr.min.js"></script>
+    <script src="~/lib/toastr.js/toastr.min.js"></script>
     <script type="text/javascript">
 
         // SignalR 接続先
@@ -49,14 +54,19 @@
 
         // メッセージ受信時の処理
         connection.on("ReceiveMessage", function (message) {
+            // 通知設定
+            var options = {
+                "timeOut": 30000
+            };
             // 受信したメッセージの表示
-            console.log("ReceiveMessage:" + message);
-
-            $("<li />").appendTo("#messagesList").text(message);
+            toastr.info(message, "", options);
         });
         // 終了メッセージ受信時の処理
         connection.on("ReceiveFinishMessage", function () {
-            console.log("ReceiveFinishMessage");
+            // 1秒後に トーストクリア
+            setTimeout(function () {
+                toastr.clear();
+            }, 1000);
         });
 
         var userGroup = $("#userGroup").val();
