@@ -1,11 +1,61 @@
-# sample-singalR-UserHub
-ログインしているユーザに 通知メッセージを表示するサンプル
+## サーバー側で遅い処理をしている場合に 進捗状況を表示する。
+
+SignalR を使って、
+下記のように 遅い時間のかかる処理を ユーザに進捗状況を表示しながら
+バックグランドで処理を行う。
 
 ログインしているユーザの ユーザID をグループ名にすることで 
 特定のユーザにメッセージを送信する。
 
+```
+[HttpPost,ActionName("Index")]
+        public IActionResult IndexPost()
+        {
+            string userGroup = this.HttpContext.User.Identity.Name;
 
-### SignalR 用の サーバー側の処理
+            if (userGroup != null)
+            {
+                UserHubSignalR personSignal = new UserHubSignalR(Request, userGroup);
+
+                // 遅い処理をバックグラウンドで実行させる
+                Queue.QueueBackgroundWorkItem(async token =>
+                {
+                    await personSignal.SendMessageAsync("開始しました");
+
+                    await Task.Delay(1000);
+                    // ユーザに非同期で通知
+                    await personSignal.SendMessageAsync(".. A ..");
+
+                    await Task.Delay(1000);
+                    await personSignal.SendMessageAsync(".. B ..");
+
+                    await Task.Delay(1500);
+
+                    // ユーザに非同期で通知
+                    await personSignal.SendMessageAsync("完了しました");
+
+                    // 完了通知
+                    await personSignal.SendClientFinishMessageAsync();
+                });
+            }
+            
+
+            return View();
+        }
+```
+
+
+![動き](movie.gif)
+
+## 利用している技術
+
+SignalR で リアルタイムに 通知データを表示する方法
+
+ASP.NET で バックグラウンドで 処理を行う方法
+
+サーバー側から SignalR で ユーザに通知処理を行うための方法
+
+### SignalR 用の サーバー側のエントリポイント追加
 
 ```
 Hubs\UserHub.cs 
@@ -25,7 +75,7 @@ Startup.cs ファイルに SignalR の動作定義追加
 
 https://github.com/kkato233/sample-singalR-UserHub/commit/59830b205acc6f72f2d4c0992934ae715d99aa2c#diff-21b431d8d52b7b53ee9e5214d52c03cc34392d5ee71f5aac292d4fad90487715
 
-### クライアント側で SignalR による リアルタイム送信の処理追加
+### クライアント側で SignalR による リアルタイム送信する JavaScript の例
 
 クライアント側のライブラリとして
 ```
@@ -86,7 +136,7 @@ SignalR の WEB サイト側の処理を記述する。
 
 ボタンと メッセージ表示領域を追加する。
 
-### サーバー側で バックグランドに実行する処理の追加
+### サーバー側で バックグランドに実行するための バックグランドタスク用のサービス追加
 
 ```
 Services\BackgroundTaskQueue.cs
@@ -139,16 +189,17 @@ public IBackgroundTaskQueue Queue { get; }
 クライアント側のライブラリとして toast.js を使って ユーザに通知するメッセージを トースト形式とする。
 
 
-### コードの実行例
+### コードの実行方法
 
+
+```
 git clone https://github.com/kkato233/sample-singalR-UserHub.git
 cd sample-singalR-UserHub\WebApplication1
 dotnet run
+```
 
-https://localhost:5001 を開く
+そして 
+https://localhost:5001 を開き
 
-ユーザ新規登録して 動作確認する。
-
-
-
+ユーザ登録すると そのユーザに紐づけて通知メッセージを表示します。
 
