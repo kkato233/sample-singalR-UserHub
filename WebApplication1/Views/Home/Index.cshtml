@@ -40,8 +40,8 @@
     </div>
 </div>
 
-<form asp-action="Index" method="post">
-    <input type="submit" value="遅い処理" />
+<form asp-action="Index" method="post" id="heavyEventForm">
+    <input id="heavyEvent" type="submit" value="遅い処理" />
 </form>
 
 @section Scripts {
@@ -90,15 +90,35 @@
                 connection.invoke("SendClientMessage", userGroup, message).catch(function (err) {
                     return console.error(err.toString());
                 });
+                $("#messageInput").val("");
             });
         } else {
             $("#sendButton").prop("disabled", true);
         }
-    </script>
 
-    <script type="text/javascript">
-        $(function () {
+        // 遅い処理のクリック時の動作
+        $("#heavyEvent").click(function (e) {
+            
+            // デフォルトのフォーム送信を防止
+            e.preventDefault();
 
+            // FormData オブジェクトを使用してフォームデータを取得
+            let formData = new FormData(document.getElementById('heavyEventForm'));
+
+            // Fetch API を使用して非同期にデータを送信
+            fetch('/Home/Index', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json()) // 応答を JSON として解析
+                .then(data => {
+                    // 成功した場合の処理
+                    document.getElementById('result').textContent = '送信成功: ' + data.message;
+                })
+                .catch(error => {
+                    // エラー処理
+                    document.getElementById('result').textContent = '送信エラー: ' + error;
+                });
         });
     </script>
 }
